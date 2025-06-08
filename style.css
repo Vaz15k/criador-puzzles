@@ -32,7 +32,6 @@ body {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    margin-bottom: 15px;
 }
 
 .board {
@@ -236,7 +235,7 @@ button:hover {
     justify-content: center;
     align-items: center;
     gap: 15px;
-    margin-bottom: 15px;
+    margin-top: 15px;
 }
 
 .piece-palette {
@@ -284,4 +283,61 @@ button:hover {
 }
 #clearBoardBtn:hover, #startPosBtn:hover, #flipBoardBtn:hover {
     background-color: #8a8a8a;
+}
+
+.pgn-group {
+    margin-top: 15px;
+    text-align: left;
+}
+
+#pgnInput {
+    width: 100%;
+    background-color: #333;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 8px;
+    min-height: 60px;
+    margin-bottom: 5px;
+}
+
+#loadPgnBtn {
+    width: 100%;
+}
+
+#game-controls {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    background-color: #333;
+    padding: 8px;
+    border-radius: 6px;
+    width: 100%;
+}
+
+.game-nav-group {
+    display: flex;
+    gap: 5px;
+}
+
+#game-controls button {
+    background-color: #616161;
+    color: white;
+    padding: 5px 8px;
+    font-size: 12px;
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+#game-controls button:hover {
+    background-color: #757575;
+}
+
+#move-indicator {
+    font-weight: bold;
+    font-size: small;
+    color: #f0f0f0;
+    flex-grow: 1;
+    text-align: center;
 }

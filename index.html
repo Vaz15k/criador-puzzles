@@ -14,6 +14,18 @@
         <div class="editor-panel">
             <h1>Editor de Posição</h1>
 
+            <div id="game-controls">
+                <div class="game-nav-group">
+                    <button id="btn-start">« Início</button>
+                    <button id="btn-prev">‹ Anterior</button>
+                </div>
+                <span id="move-indicator"></span>
+                <div class="game-nav-group">
+                    <button id="btn-next">Próximo ›</button>
+                    <button id="btn-end">Fim »</button>
+                </div>
+            </div>
+
             <div class="editor-board-wrapper">
                 <div id="black-palette" class="piece-palette vertical">
                     <img src="img/chesspieces/default/bK.png" class="palette-piece" data-piece="bK" title="Rei Preto">
@@ -54,9 +66,15 @@
                     <label for="turnBlack">Pretas</label>
                 </div>
                 <button id="addPositionBtn">Adicionar Posição à Grade</button>
-                 <div class="fen-group">
+                <div class="fen-group">
                     <label for="fenInput"><strong>FEN da Posição:</strong></label>
                     <input type="text" id="fenInput" placeholder="Cole um FEN e pressione Enter">
+                </div>
+
+                <div class="pgn-group">
+                    <label for="pgnInput"><strong>Importar PGN:</strong></label>
+                    <textarea id="pgnInput" rows="4" placeholder="Cole o PGN da partida aqui..."></textarea>
+                    <button id="loadPgnBtn">Carregar PGN</button>
                 </div>
             </div>
         </div>
@@ -81,6 +99,7 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
