@@ -360,24 +360,29 @@ $(document).ready(function() {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const useWhiteBg = $('#whiteBgExport').is(':checked');
-        const puzzlesPerPage = 4;
-        const margin = 10;
+        
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const gap = 8;
-        const puzzleSize = (pageWidth - (margin * 2) - gap) / 2;
-        const infoHeight = 20; 
+        
+        const puzzlesPerPage = 4;
+        const puzzleSize = 80;
+        const gap = 15;
+        const infoHeight = 25;
+        
+        const totalGridWidth = (puzzleSize * 2) + gap;
+        const marginX = (pageWidth - totalGridWidth) / 2;
+        const marginY = 30;
+
         const totalPuzzleHeight = puzzleSize + infoHeight;
 
         const positions = [
-            { x: margin, y: margin }, 
-            { x: margin + puzzleSize + gap, y: margin },
-            { x: margin, y: margin + totalPuzzleHeight }, 
-            { x: margin + puzzleSize + gap, y: margin + totalPuzzleHeight }
+            { x: marginX, y: marginY }, 
+            { x: marginX + puzzleSize + gap, y: marginY },
+            { x: marginX, y: marginY + totalPuzzleHeight }, 
+            { x: marginX + puzzleSize + gap, y: marginY + totalPuzzleHeight }
         ];
 
         for (let i = 0; i < puzzleList.length; i++) {
-            const pageIndex = Math.floor(i / puzzlesPerPage);
             if (i > 0 && (i % puzzlesPerPage === 0)) {
                 pdf.addPage();
             }
@@ -406,9 +411,16 @@ $(document).ready(function() {
             const imgData = canvas.toDataURL('image/png');
             pdf.addImage(imgData, 'PNG', pos.x, pos.y, puzzleSize, puzzleSize);
 
+            const text = `Jogam as ${puzzle.turn}: _________________`;
+            
             pdf.setFontSize(11);
             pdf.setTextColor(useWhiteBg ? '#000000' : '#FFFFFF');
-            pdf.text(`Jogam as ${puzzle.turn}: _________________`, pos.x, pos.y + puzzleSize + 10);
+
+            const textWidth = pdf.getTextWidth(text);
+            const textX = pos.x + (puzzleSize / 2) - (textWidth / 2);
+            const textY = pos.y + puzzleSize + 6;
+
+            pdf.text(text, textX, textY);
 
             tempDiv.remove();
         }
