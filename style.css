@@ -42,6 +42,8 @@ body {
     width: 400px;
     margin: 0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    touch-action: none; /* Impede scroll ao arrastar no mobile */
+    -ms-touch-action: none;
 }
 
 .controls {
@@ -367,7 +369,6 @@ button:hover {
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
-}
 
 .custom-file-upload-button:hover {
     background-color: #666;
