@@ -1,9 +1,12 @@
 $(document).ready(function() {
     let editorBoard = null;
     let puzzleList = [];
-    let pageCounter = 0;
     let selectedTool = null;
     let mousePos = { x: -1, y: -1 };
+    
+    let headerFile = null;
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js';
 
     const chess = new Chess();
     let gameHistory = [];
@@ -23,7 +26,7 @@ $(document).ready(function() {
         wN: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
         wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
     };
-
+    
     const pieceTheme = function(piece) {
         return svgPieces[piece];
     };
@@ -350,68 +353,159 @@ $(document).ready(function() {
             exportButton.prop('disabled', false).text('Exportar como Imagem');
         }
     });
+    
+    $('#headerInput').on('change', function(event) {
+        const file = event.target.files[0];
+        const clearBtn = $('#clearHeaderBtn');
+
+        if (file) {
+            headerFile = file;
+            clearBtn.show();
+        } else {
+            headerFile = null;
+            clearBtn.hide();
+        }
+    });
+
+    $('#clearHeaderBtn').on('click', function() {
+        headerFile = null;
+        $('#headerInput').val('');
+        $(this).hide();
+    });
 
     $('#exportPdfBtn').on('click', async function() {
-        if (puzzleList.length === 0) { return; }
+        if (puzzleList.length === 0) {
+            alert('Não há puzzles na grade para exportar.');
+            return;
+        }
 
         const exportButton = $(this);
         exportButton.prop('disabled', true).text('Gerando PDF...');
         
+        let headerImageDataUrl = null;
+
+        if (headerFile) {
+            try {
+                if (headerFile.type.startsWith('image/')) {
+                    headerImageDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(headerFile);
+                    });
+                } else if (headerFile.type === 'application/pdf') {
+                    const pdfData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(new Uint8Array(e.target.result));
+                        reader.onerror = reject;
+                        reader.readAsArrayBuffer(headerFile);
+                    });
+
+                    const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                    const page = await pdfDoc.getPage(1);
+                    const viewport = page.getViewport({ scale: 2.0 });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    headerImageDataUrl = canvas.toDataURL('image/png');
+                }
+            } catch (error) {
+                console.error("Erro ao processar o arquivo de cabeçalho:", error);
+                alert("Não foi possível processar o arquivo de cabeçalho.");
+                exportButton.prop('disabled', false).text('Exportar para PDF');
+                return;
+            }
+        }
+
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const useWhiteBg = $('#whiteBgExport').is(':checked');
         
         const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
         
+        const topMarginBoxHeight = 40;
+        const contentStartY = topMarginBoxHeight;
+
+        const totalPages = Math.ceil(puzzleList.length / 4);
+        for(let p = 1; p <= totalPages; p++) {
+            if (p > 1) {
+                pdf.addPage();
+            }
+            if (headerImageDataUrl) {
+                const img = new Image();
+                img.src = headerImageDataUrl;
+                await new Promise(resolve => { img.onload = resolve; });
+
+                const pageMargin = 15;
+                const maxHeaderWidth = pageWidth - (pageMargin * 2);
+                const maxHeaderHeight = topMarginBoxHeight - 10;
+
+                let renderWidth = img.width;
+                let renderHeight = img.height;
+                const aspectRatio = renderWidth / renderHeight;
+
+                if (renderWidth > maxHeaderWidth) {
+                    renderWidth = maxHeaderWidth;
+                    renderHeight = renderWidth / aspectRatio;
+                }
+                if (renderHeight > maxHeaderHeight) {
+                    renderHeight = maxHeaderHeight;
+                    renderWidth = renderHeight * aspectRatio;
+                }
+
+                const headerX = (pageWidth - renderWidth) / 2;
+                const headerY = (topMarginBoxHeight - renderHeight) / 2;
+
+                pdf.addImage(headerImageDataUrl, 'PNG', headerX, headerY, renderWidth, renderHeight);
+            }
+        }
+        pdf.setPage(1);
+
         const puzzlesPerPage = 4;
         const puzzleSize = 80;
         const gap = 15;
         const infoHeight = 25;
-        
         const totalGridWidth = (puzzleSize * 2) + gap;
         const marginX = (pageWidth - totalGridWidth) / 2;
-        const marginY = 30;
-
         const totalPuzzleHeight = puzzleSize + infoHeight;
 
         const positions = [
-            { x: marginX, y: marginY }, 
-            { x: marginX + puzzleSize + gap, y: marginY },
-            { x: marginX, y: marginY + totalPuzzleHeight }, 
-            { x: marginX + puzzleSize + gap, y: marginY + totalPuzzleHeight }
+            { x: marginX, y: contentStartY }, 
+            { x: marginX + puzzleSize + gap, y: contentStartY },
+            { x: marginX, y: contentStartY + totalPuzzleHeight }, 
+            { x: marginX + puzzleSize + gap, y: contentStartY + totalPuzzleHeight }
         ];
 
         for (let i = 0; i < puzzleList.length; i++) {
-            if (i > 0 && (i % puzzlesPerPage === 0)) {
-                pdf.addPage();
-            }
+            const pageIndex = Math.floor(i / puzzlesPerPage);
+            pdf.setPage(pageIndex + 1);
 
             const puzzle = puzzleList[i];
             const pos = positions[i % puzzlesPerPage];
             
             const tempId = `temp-board-${i}`;
-            const tempDiv = $(`<div id="${tempId}" class="hidden-board-for-export" style="width: ${puzzleSize * 4}px; height: ${puzzleSize * 4}px;"></div>`);
-            if (useWhiteBg) { tempDiv.addClass('export-white-bg'); }
+            const tempDiv = $(`<div id="${tempId}" style="width: ${puzzleSize * 4}px; height: ${puzzleSize * 4}px;"></div>`);
+            if (useWhiteBg) tempDiv.addClass('export-white-bg');
             $('body').append(tempDiv);
             
             const tempBoardElement = document.getElementById(tempId);
-            Chessboard(tempBoardElement, { 
-                position: puzzle.fen, 
-                orientation: puzzle.orientation, 
-                pieceTheme: pieceTheme
-            });
+            Chessboard(tempBoardElement, { position: puzzle.fen, orientation: puzzle.orientation, pieceTheme: pieceTheme });
 
             const canvas = await html2canvas(tempBoardElement, { 
                 scale: 2,
                 useCORS: true,
-                backgroundColor: useWhiteBg ? '#FFFFFF' : null
+                backgroundColor: useWhiteBg ? '#FFFFFF' : null,
+                logging: false
             });
 
             const imgData = canvas.toDataURL('image/png');
             pdf.addImage(imgData, 'PNG', pos.x, pos.y, puzzleSize, puzzleSize);
 
-            const text = `Jogam as ${puzzle.turn}: _________________`;
+            const text = `${puzzle.turn}: _________________`;
             
             pdf.setFontSize(11);
             pdf.setTextColor(useWhiteBg ? '#000000' : '#FFFFFF');

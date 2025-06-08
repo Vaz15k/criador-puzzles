@@ -82,13 +82,22 @@
         <div class="output-panel">
             <div class="output-header">
                 <h1>Puzzles Gerados</h1>
-                <div class="export-buttons">
-                    <button id="exportPdfBtn">Exportar para PDF</button>
-                    <button id="exportImgBtn">Exportar como Imagem</button>
-                    <button id="clearAllBtn">Limpar Tudo</button>
-                    <div class="export-options">
-                        <input type="checkbox" id="whiteBgExport" checked>
-                        <label for="whiteBgExport">Exportar PDF com Fundo Branco</label>
+                <div class="export-controls-container">
+                    <div class="action-buttons-group">
+                        <button id="exportPdfBtn">Exportar para PDF</button>
+                        <button id="exportImgBtn">Exportar como Imagem</button>
+                        <button id="clearAllBtn">Limpar Tudo</button>
+                    </div>
+                    <div class="options-group">
+                        <div class="header-upload-group">
+                            <label for="headerInput" class="custom-file-upload-button">Selecionar Cabeçalho</label>
+                            <input type="file" id="headerInput" accept=".png,.jpg,.jpeg,.pdf">
+                            <button id="clearHeaderBtn" title="Remover cabeçalho">Limpar</button>
+                        </div>
+                        <div class="export-options">
+                            <input type="checkbox" id="whiteBgExport" checked>
+                            <label for="whiteBgExport">Exportar PDF com Fundo Branco</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -103,6 +112,7 @@
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
