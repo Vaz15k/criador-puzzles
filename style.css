@@ -89,7 +89,7 @@ button {
     cursor: pointer;
     font-size: 16px;
     margin: 5px;
-    transition: background-color: 0.3s ease;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
@@ -369,6 +369,7 @@ button:hover {
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
+}
 
 .custom-file-upload-button:hover {
     background-color: #666;
