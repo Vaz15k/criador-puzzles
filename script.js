@@ -1,85 +1,99 @@
 $(document).ready(function() {
     let editorBoard = null;
-    let positionCounter = 0;
-    let currentPage = null;
-    let pageCounter = 0;
-    const POSITIONS_PER_PAGE = 16;
-    
     let puzzleList = [];
+    let pageCounter = 0;
 
     const pieceThemeUrl = 'img/chesspieces/default/{piece}.png';
 
-    function onBoardChange(oldPos, newPos) {
-        $('#fenInput').val(editorBoard.fen());
+    function updatePuzzleOrder() {
+        const newPuzzleOrder = [];
+        $('#outputContainer .position-wrapper').each(function() {
+            const puzzleId = $(this).data('id');
+            const puzzleData = puzzleList.find(p => p.id === puzzleId);
+            if (puzzleData) {
+                newPuzzleOrder.push(puzzleData);
+            }
+        });
+        puzzleList = newPuzzleOrder;
     }
 
     const config = {
         draggable: true,
         position: 'start',
         showNotation: true,
-        pieceTheme: pieceThemeUrl,
-        onChange: onBoardChange,
-        onSnapEnd: onBoardChange
+        pieceTheme: pieceThemeUrl
     };
     editorBoard = Chessboard('boardEditor', config);
     $('#fenInput').val(editorBoard.fen());
+    $('#fenInput').on('change', () => editorBoard.position($('#fenInput').val()));
 
-    $('#fenInput').on('change', function() {
-        editorBoard.position($(this).val());
-    });
-    
     $('#addPositionBtn').on('click', function() {
         const fen = editorBoard.fen();
         const turn = $('input[name="turn"]:checked').val();
-        puzzleList.push({ fen, turn });
+        
+        const puzzleId = 'puzzle-' + Date.now();
+        puzzleList.push({ id: puzzleId, fen, turn });
 
-        if (positionCounter % POSITIONS_PER_PAGE === 0) {
+        if ($('#outputContainer .grid-container').length === 0) {
             pageCounter++;
-            const pageHtml = `<div class="page" id="page-${pageCounter}"><h2>Página ${pageCounter}</h2><div class="grid-container"></div></div>`;
+            const pageHtml = `<div class="page" id="page-${pageCounter}"><div class="grid-container"></div></div>`;
             $('#outputContainer').append(pageHtml);
-            currentPage = $(`#page-${pageCounter} .grid-container`);
+
+            $('.grid-container').sortable({
+                placeholder: "sortable-placeholder",
+                cursor: "grabbing",
+                update: function(event, ui) {
+                    updatePuzzleOrder();
+                }
+            }).disableSelection();
         }
         
-        const positionId = `pos-${positionCounter}`;
         const positionHtml = `
-            <div class="position-wrapper">
-                <div class="position-board" id="${positionId}"></div>
+            <div class="position-wrapper" data-id="${puzzleId}">
+                <button class="delete-btn" title="Remover Posição">X</button>
+                <div class="position-board"></div>
                 <div class="position-info">${turn}<br>_____________</div>
             </div>`;
-        currentPage.append(positionHtml);
+        
+        const newPuzzleElement = $(positionHtml);
+        $('.grid-container').append(newPuzzleElement);
 
-        const boardElement = document.getElementById(positionId);
+        const boardElement = newPuzzleElement.find('.position-board')[0];
         if (boardElement) {
             Chessboard(boardElement, {
                 position: fen,
                 showNotation: true,
                 pieceTheme: pieceThemeUrl
             });
-        } else {
-            console.error("Erro: Elemento do tabuleiro não encontrado na grade visual: #" + positionId);
         }
+    });
 
-        positionCounter++;
+    $('#outputContainer').on('click', '.delete-btn', function() {
+        const puzzleWrapper = $(this).closest('.position-wrapper');
+        const puzzleIdToRemove = puzzleWrapper.data('id');
+
+        puzzleList = puzzleList.filter(p => p.id !== puzzleIdToRemove);
+        
+        puzzleWrapper.fadeOut(300, function() {
+            $(this).remove();
+        });
     });
 
     $('#clearAllBtn').on('click', function() {
         $('#outputContainer').empty();
         puzzleList = [];
-        positionCounter = 0;
         pageCounter = 0;
-        currentPage = null;
         editorBoard.start();
         $('#fenInput').val(editorBoard.fen());
-        alert('Tudo foi limpo!');
     });
 
     $('#exportImgBtn').on('click', function() {
-        if(puzzleList.length === 0) {
+        if (puzzleList.length === 0) {
             alert("Adicione pelo menos uma posição antes de exportar.");
             return;
         }
         alert("A exportação da imagem será iniciada...");
-        html2canvas(document.querySelector("#outputContainer")).then(canvas => {
+        html2canvas(document.querySelector("#outputContainer"), { useCORS: true }).then(canvas => {
             const link = document.createElement('a');
             link.href = canvas.toDataURL('image/png');
             link.download = 'puzzles_xadrez.png';

@@ -1,9 +1,16 @@
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #181818; /* Fundo escuro */
+    background-color: #181818;
     margin: 0;
     padding: 20px;
-    color: #f0f0f0; /* Texto claro */
+    color: #f0f0f0;
 }
 
 .main-container {
@@ -14,7 +21,7 @@ body {
 .editor-panel {
     flex: 1;
     max-width: 420px;
-    background: #222; /* Painel escuro */
+    background: #222;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -57,7 +64,7 @@ body {
 }
 
 button {
-    background-color: #64b5f6; /* Azul */
+    background-color: #64b5f6;
     color: #222;
     padding: 10px 15px;
     border: none;
@@ -69,15 +76,15 @@ button {
 }
 
 button:hover {
-    background-color: #42a5f5; /* Azul mais claro no hover */
+    background-color: #42a5f5;
 }
 
 #clearAllBtn {
-    background-color: #e57373; /* Vermelho */
+    background-color: #e57373;
     color: #fff;
 }
 #clearAllBtn:hover {
-    background-color: #f44336; /* Vermelho mais claro no hover */
+    background-color: #f44336;
 }
 
 .output-panel {
@@ -124,22 +131,31 @@ button:hover {
     padding-bottom: 5px;
     margin-bottom: 10px;
 }
+
 .grid-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-wrap: wrap;
     gap: 20px;
 }
+
 .position-wrapper {
+    flex: 0 1 calc((100% - 40px) / 3);
     text-align: center;
     border: 1px solid #444;
     padding: 10px;
     border-radius: 4px;
     background-color: #333;
+    position: relative;
+    cursor: grab;
 }
+
 .position-board {
     width: 100%;
+    display: flex;
+    justify-content: center;
     margin-bottom: 10px;
 }
+
 .position-info {
     font-weight: bold;
     font-size: 1em;
@@ -167,4 +183,38 @@ button:hover {
 }
 .export-white-bg {
     background-color: #ffffff;
+}
+
+.delete-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    background-color: #f44336;
+    color: white;
+    border: 1px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 22px;
+    text-align: center;
+    padding: 0;
+    z-index: 10;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.position-wrapper:hover .delete-btn {
+    opacity: 1;
+}
+
+.sortable-placeholder {
+    border: 2px dashed #64b5f6;
+    background-color: #333;
+    border-radius: 4px;
+    height: 100%;
+    box-sizing: border-box;
+    flex: 0 1 calc((100% - 40px) / 3);
 }
