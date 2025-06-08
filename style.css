@@ -276,12 +276,12 @@ button:hover {
     background-color: #444;
 }
 
-#clearBoardBtn, #startPosBtn {
+#clearBoardBtn, #startPosBtn, #flipBoardBtn {
     background-color: #757575;
     padding: 5px 10px;
     font-size: 14px;
     margin: 0;
 }
-#clearBoardBtn:hover, #startPosBtn:hover {
+#clearBoardBtn:hover, #startPosBtn:hover, #flipBoardBtn:hover {
     background-color: #8a8a8a;
 }

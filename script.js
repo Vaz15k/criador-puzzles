@@ -54,7 +54,6 @@ $(document).ready(function() {
         if (!selectedTool) {
             return;
         }
-
         const square = $(this).data('square');
         let currentPosition = editorBoard.position();
 
@@ -63,7 +62,6 @@ $(document).ready(function() {
         } else {
             currentPosition[square] = selectedTool;
         }
-
         editorBoard.position(currentPosition, false);
     });
 
@@ -75,11 +73,17 @@ $(document).ready(function() {
         editorBoard.start(false);
     });
 
+    $('#flipBoardBtn').on('click', function() {
+        editorBoard.flip();
+    });
+
     $('#addPositionBtn').on('click', function() {
         const fen = editorBoard.fen();
         const turn = $('input[name="turn"]:checked').val();
+        const orientation = editorBoard.orientation();
         const puzzleId = 'puzzle-' + Date.now();
-        puzzleList.push({ id: puzzleId, fen, turn });
+
+        puzzleList.push({ id: puzzleId, fen, turn, orientation });
 
         if ($('#outputContainer .grid-container').length === 0) {
             pageCounter++;
@@ -108,6 +112,7 @@ $(document).ready(function() {
         if (boardElement) {
             Chessboard(boardElement, {
                 position: fen,
+                orientation: orientation,
                 showNotation: true,
                 pieceTheme: pieceThemeUrl
             });
@@ -169,7 +174,11 @@ $(document).ready(function() {
             $('body').append(tempDiv);
             const tempBoardElement = document.getElementById(tempId);
             if (tempBoardElement) {
-                Chessboard(tempBoardElement, { position: puzzle.fen, pieceTheme: pieceThemeUrl });
+                Chessboard(tempBoardElement, { 
+                    position: puzzle.fen,
+                    orientation: puzzle.orientation,
+                    pieceTheme: pieceThemeUrl 
+                });
                 const canvas = await html2canvas(tempBoardElement, { backgroundColor: useWhiteBg ? '#FFFFFF' : '#333333' });
                 const imgData = canvas.toDataURL('image/png');
                 pdf.addImage(imgData, 'PNG', pos.x, pos.y, puzzleSize, puzzleSize);
