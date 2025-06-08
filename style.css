@@ -20,16 +20,24 @@ body {
 
 .editor-panel {
     flex: 1;
-    max-width: 420px;
+    max-width: 540px;
     background: #222;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
+.editor-board-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
 .board {
     width: 400px;
-    margin: 0 auto;
+    margin: 0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
@@ -39,12 +47,16 @@ body {
 }
 
 .radio-group {
-    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
 }
 
 .radio-group label {
     color: #ddd;
-    margin-left: 5px;
+    margin: 0;
 }
 
 .fen-group {
@@ -217,4 +229,59 @@ button:hover {
     height: 100%;
     box-sizing: border-box;
     flex: 0 1 calc((100% - 40px) / 3);
+}
+
+.utility-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.piece-palette {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.piece-palette.vertical {
+    flex-direction: column;
+    width: 50px;
+    gap: 5px;
+    background-color: #333;
+    padding: 10px 0;
+    border-radius: 6px;
+}
+
+.palette-piece {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    padding: 2px;
+    transition: background-color 0.2s, border-color 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.palette-piece:hover {
+    background-color: #555;
+}
+
+.palette-piece.selected-tool {
+    border-color: #64b5f6;
+    background-color: #444;
+}
+
+#clearBoardBtn, #startPosBtn {
+    background-color: #757575;
+    padding: 5px 10px;
+    font-size: 14px;
+    margin: 0;
+}
+#clearBoardBtn:hover, #startPosBtn:hover {
+    background-color: #8a8a8a;
 }

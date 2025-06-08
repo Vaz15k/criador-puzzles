@@ -13,10 +13,40 @@
     <div class="main-container">
         <div class="editor-panel">
             <h1>Editor de Posição</h1>
-            <div id="boardEditor" class="board"></div>
+
+            <div class="editor-board-wrapper">
+                <div id="black-palette" class="piece-palette vertical">
+                    <img src="img/chesspieces/default/bK.png" class="palette-piece" data-piece="bK" title="Rei Preto">
+                    <img src="img/chesspieces/default/bQ.png" class="palette-piece" data-piece="bQ" title="Dama Preta">
+                    <img src="img/chesspieces/default/bR.png" class="palette-piece" data-piece="bR" title="Torre Preta">
+                    <img src="img/chesspieces/default/bB.png" class="palette-piece" data-piece="bB" title="Bispo Preto">
+                    <img src="img/chesspieces/default/bN.png" class="palette-piece" data-piece="bN" title="Cavalo Preto">
+                    <img src="img/chesspieces/default/bP.png" class="palette-piece" data-piece="bP" title="Peão Preto">
+                </div>
+            
+                <div id="boardEditor" class="board"></div>
+
+                <div id="white-palette" class="piece-palette vertical">
+                    <img src="img/chesspieces/default/wK.png" class="palette-piece" data-piece="wK" title="Rei Branco">
+                    <img src="img/chesspieces/default/wQ.png" class="palette-piece" data-piece="wQ" title="Dama Branca">
+                    <img src="img/chesspieces/default/wR.png" class="palette-piece" data-piece="wR" title="Torre Branca">
+                    <img src="img/chesspieces/default/wB.png" class="palette-piece" data-piece="wB" title="Bispo Branco">
+                    <img src="img/chesspieces/default/wN.png" class="palette-piece" data-piece="wN" title="Cavalo Branco">
+                    <img src="img/chesspieces/default/wP.png" class="palette-piece" data-piece="wP" title="Peão Branco">
+                </div>
+            </div>
+
+            <div class="utility-controls">
+                <div class="palette-piece" data-piece="delete" title="Remover Peça">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="32px" height="32px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>
+                </div>
+                <button id="startPosBtn">Posição Inicial</button>
+                <button id="clearBoardBtn">Limpar Tabuleiro</button>
+            </div>
+
             <div class="controls">
-                <label><strong>Lance das:</strong></label>
                 <div class="radio-group">
+                    <label><strong>Lance das:</strong></label>
                     <input type="radio" id="turnWhite" name="turn" value="Brancas" checked>
                     <label for="turnWhite">Brancas</label>
                     <input type="radio" id="turnBlack" name="turn" value="Pretas">

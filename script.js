@@ -2,6 +2,7 @@ $(document).ready(function() {
     let editorBoard = null;
     let puzzleList = [];
     let pageCounter = 0;
+    let selectedTool = null;
 
     const pieceThemeUrl = 'img/chesspieces/default/{piece}.png';
 
@@ -21,16 +22,62 @@ $(document).ready(function() {
         draggable: true,
         position: 'start',
         showNotation: true,
-        pieceTheme: pieceThemeUrl
+        pieceTheme: pieceThemeUrl,
+        onDragStart: function(source, piece, position, orientation) {
+            if (selectedTool) {
+                $('.palette-piece').removeClass('selected-tool');
+                selectedTool = null;
+            }
+        },
+        onChange: function(oldPos, newPos) {
+             $('#fenInput').val(Chessboard.objToFen(newPos));
+        }
     };
     editorBoard = Chessboard('boardEditor', config);
     $('#fenInput').val(editorBoard.fen());
     $('#fenInput').on('change', () => editorBoard.position($('#fenInput').val()));
 
+    $('.palette-piece').on('click', function() {
+        const tool = $(this).data('piece');
+        
+        if ($(this).hasClass('selected-tool')) {
+            selectedTool = null;
+            $(this).removeClass('selected-tool');
+        } else {
+            selectedTool = tool;
+            $('.palette-piece').removeClass('selected-tool');
+            $(this).addClass('selected-tool');
+        }
+    });
+
+    $('#boardEditor').on('click', '.square-55d63', function() {
+        if (!selectedTool) {
+            return;
+        }
+
+        const square = $(this).data('square');
+        let currentPosition = editorBoard.position();
+
+        if (selectedTool === 'delete') {
+            delete currentPosition[square];
+        } else {
+            currentPosition[square] = selectedTool;
+        }
+
+        editorBoard.position(currentPosition, false);
+    });
+
+    $('#clearBoardBtn').on('click', function() {
+        editorBoard.clear(false);
+    });
+
+    $('#startPosBtn').on('click', function() {
+        editorBoard.start(false);
+    });
+
     $('#addPositionBtn').on('click', function() {
         const fen = editorBoard.fen();
         const turn = $('input[name="turn"]:checked').val();
-        
         const puzzleId = 'puzzle-' + Date.now();
         puzzleList.push({ id: puzzleId, fen, turn });
 
@@ -38,7 +85,6 @@ $(document).ready(function() {
             pageCounter++;
             const pageHtml = `<div class="page" id="page-${pageCounter}"><div class="grid-container"></div></div>`;
             $('#outputContainer').append(pageHtml);
-
             $('.grid-container').sortable({
                 placeholder: "sortable-placeholder",
                 cursor: "grabbing",
@@ -71,9 +117,7 @@ $(document).ready(function() {
     $('#outputContainer').on('click', '.delete-btn', function() {
         const puzzleWrapper = $(this).closest('.position-wrapper');
         const puzzleIdToRemove = puzzleWrapper.data('id');
-
         puzzleList = puzzleList.filter(p => p.id !== puzzleIdToRemove);
-        
         puzzleWrapper.fadeOut(300, function() {
             $(this).remove();
         });
@@ -83,16 +127,11 @@ $(document).ready(function() {
         $('#outputContainer').empty();
         puzzleList = [];
         pageCounter = 0;
-        editorBoard.start();
-        $('#fenInput').val(editorBoard.fen());
+        editorBoard.position('start');
     });
 
     $('#exportImgBtn').on('click', function() {
-        if (puzzleList.length === 0) {
-            alert("Adicione pelo menos uma posição antes de exportar.");
-            return;
-        }
-        alert("A exportação da imagem será iniciada...");
+        if (puzzleList.length === 0) { return; }
         html2canvas(document.querySelector("#outputContainer"), { useCORS: true }).then(canvas => {
             const link = document.createElement('a');
             link.href = canvas.toDataURL('image/png');
@@ -102,18 +141,12 @@ $(document).ready(function() {
     });
 
     $('#exportPdfBtn').on('click', async function() {
-        if (puzzleList.length === 0) {
-            alert("Adicione pelo menos uma posição antes de exportar.");
-            return;
-        }
-
+        if (puzzleList.length === 0) { return; }
         const exportButton = $(this);
         exportButton.prop('disabled', true).text('Gerando PDF...');
-        
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const useWhiteBg = $('#whiteBgExport').is(':checked');
-
         const puzzlesPerPage = 4;
         const margin = 15;
         const pageWidth = pdf.internal.pageSize.getWidth();
@@ -124,45 +157,27 @@ $(document).ready(function() {
             { x: margin, y: margin + puzzleSize + 20 },
             { x: margin + puzzleSize + 10, y: margin + puzzleSize + 20 }
         ];
-
         for (let i = 0; i < puzzleList.length; i++) {
-            const indexOnPage = i % puzzlesPerPage;
-            if (i > 0 && indexOnPage === 0) {
+            if (i > 0 && (i % puzzlesPerPage === 0)) {
                 pdf.addPage();
             }
-
             const puzzle = puzzleList[i];
-            const pos = positions[indexOnPage];
-            
+            const pos = positions[i % puzzlesPerPage];
             const tempId = `temp-board-${i}`;
             const tempDiv = $(`<div id="${tempId}" class="hidden-board-for-export"></div>`);
-            if (useWhiteBg) {
-                tempDiv.addClass('export-white-bg');
-            }
+            if (useWhiteBg) { tempDiv.addClass('export-white-bg'); }
             $('body').append(tempDiv);
-            
             const tempBoardElement = document.getElementById(tempId);
             if (tempBoardElement) {
-                Chessboard(tempBoardElement, { 
-                    position: puzzle.fen, 
-                    pieceTheme: pieceThemeUrl
-                });
-
-                const canvas = await html2canvas(tempBoardElement, { 
-                    backgroundColor: useWhiteBg ? '#FFFFFF' : '#333333'
-                });
+                Chessboard(tempBoardElement, { position: puzzle.fen, pieceTheme: pieceThemeUrl });
+                const canvas = await html2canvas(tempBoardElement, { backgroundColor: useWhiteBg ? '#FFFFFF' : '#333333' });
                 const imgData = canvas.toDataURL('image/png');
-
                 pdf.addImage(imgData, 'PNG', pos.x, pos.y, puzzleSize, puzzleSize);
                 pdf.setFontSize(12);
                 pdf.text(`${puzzle.turn}: _______________________`, pos.x, pos.y + puzzleSize + 8);
-            } else {
-                console.error("Erro: Elemento do tabuleiro temporário não encontrado: #" + tempId);
             }
-            
             tempDiv.remove();
         }
-
         pdf.save('taticos_xadrez.pdf');
         exportButton.prop('disabled', false).text('Exportar para PDF');
     });
