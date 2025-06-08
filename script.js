@@ -9,7 +9,24 @@ $(document).ready(function() {
     let gameHistory = [];
     let currentMoveIndex = -1;
 
-    const pieceThemeUrl = 'img/chesspieces/default/{piece}.png';
+    const svgPieces = {
+        bK: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+        bQ: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+        bR: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+        bB: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+        bN: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+        bP: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+        wK: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+        wQ: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+        wR: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+        wB: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+        wN: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+        wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
+    };
+
+    const pieceTheme = function(piece) {
+        return svgPieces[piece];
+    };
 
     $(document).on('mousemove', function(event) {
         mousePos.x = event.pageX;
@@ -50,23 +67,16 @@ $(document).ready(function() {
                mousePos.y >= pos.top && mousePos.y <= pos.top + height;
     }
 
-    // --- CONFIGURAÇÃO DO TABULEIRO COM A LÓGICA CORRIGIDA ---
     const config = {
         draggable: true,
         position: 'start',
         showNotation: true,
-        pieceTheme: pieceThemeUrl,
+        pieceTheme: pieceTheme,
         
-        // ESTA É A CORREÇÃO PRINCIPAL:
         onDragStart: function(source, piece) {
-            // Se a ferramenta 'delete' estiver ativa, previne o início do arrasto.
-            // Isso permite que o evento de 'click' seja processado normalmente.
             if (selectedTool === 'delete') {
-                return false; // Cancela o drag.
+                return false;
             }
-
-            // Se qualquer outra ferramenta estiver ativa (ex: uma peça da paleta),
-            // desmarca ela antes de iniciar um arrasto normal no tabuleiro.
             if (selectedTool) {
                 $('.palette-piece').removeClass('selected-tool');
                 selectedTool = null;
@@ -85,8 +95,6 @@ $(document).ready(function() {
     };
     
     editorBoard = Chessboard('boardEditor', config);
-
-    // --- LÓGICA DE INTERAÇÃO DO EDITOR ---
 
     $('.piece-palette img').draggable({
         helper: 'clone',
@@ -146,8 +154,6 @@ $(document).ready(function() {
         editorBoard.position(currentPosition, false);
     });
 
-    // --- RESTANTE DAS FUNCIONALIDADES (sem alterações) ---
-    
     function hidePgnControls() {
         gameHistory = [];
         currentMoveIndex = -1;
@@ -257,7 +263,7 @@ $(document).ready(function() {
             position: fen,
             orientation: orientation,
             showNotation: true,
-            pieceTheme: pieceThemeUrl
+            pieceTheme: pieceTheme
         });
     });
 
@@ -275,19 +281,74 @@ $(document).ready(function() {
         hidePgnControls();
     });
 
-    $('#exportImgBtn').on('click', function() {
-        if ($('.grid-container').length === 0) { return; }
-        const container = $(".grid-container")[0];
-        const originalBg = container.style.backgroundColor;
-        container.style.backgroundColor = '#222';
+    $('#exportImgBtn').on('click', async function() {
+        if (puzzleList.length === 0) {
+            alert('Não há puzzles na grade para exportar.');
+            return;
+        }
 
-        html2canvas(container, { useCORS: true, scale: 2 }).then(canvas => {
+        const exportButton = $(this);
+        exportButton.prop('disabled', true).text('Gerando ZIP...');
+
+        const zip = new JSZip();
+        const fixedBoardSize = 400;
+
+        for (let i = 0; i < puzzleList.length; i++) {
+            const puzzle = puzzleList[i];
+            const turn = puzzle.turn.toLowerCase();
+            
+            const tempId = `temp-board-for-img-${puzzle.id}`;
+            const tempDiv = $(`
+                <div 
+                  id="${tempId}" 
+                  style="position: absolute; left: -9999px; top: -9999px; width: ${fixedBoardSize}px; height: ${fixedBoardSize}px;">
+                </div>
+            `);
+            $('body').append(tempDiv);
+            
+            const tempBoardElement = document.getElementById(tempId);
+            Chessboard(tempBoardElement, {
+                position: puzzle.fen,
+                orientation: puzzle.orientation,
+                pieceTheme: pieceTheme
+            });
+
+            try {
+                const internalBoard = tempBoardElement.querySelector('div[class^="board-"]');
+
+                const canvas = await html2canvas(internalBoard || tempBoardElement, {
+                    scale: 3, 
+                    useCORS: true,
+                    backgroundColor: null
+                });
+
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                const fileName = `puzzle_${String(i + 1).padStart(2, '0')}_(${turn}).png`;
+                zip.file(fileName, blob);
+
+            } catch (error) {
+                console.error(`Erro ao gerar a imagem para o puzzle ${i + 1}:`, error);
+            } finally {
+                tempDiv.remove();
+            }
+        }
+
+        try {
+            const zipBlob = await zip.generateAsync({ type: "blob" });
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = 'puzzles_xadrez.png';
+            link.href = URL.createObjectURL(zipBlob);
+            link.download = 'puzzles_xadrez.zip';
+            document.body.appendChild(link);
             link.click();
-            container.style.backgroundColor = originalBg;
-        });
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+        } catch (error) {
+            console.error("Erro ao gerar o arquivo ZIP:", error);
+            alert("Ocorreu um erro ao gerar o arquivo ZIP.");
+        } finally {
+            exportButton.prop('disabled', false).text('Exportar como Imagem');
+        }
     });
 
     $('#exportPdfBtn').on('click', async function() {
@@ -299,22 +360,20 @@ $(document).ready(function() {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const useWhiteBg = $('#whiteBgExport').is(':checked');
-        const puzzlesPerPage = 6;
+        const puzzlesPerPage = 4;
         const margin = 10;
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
         const gap = 8;
         const puzzleSize = (pageWidth - (margin * 2) - gap) / 2;
-        const infoHeight = 15;
+        const infoHeight = 20; 
         const totalPuzzleHeight = puzzleSize + infoHeight;
 
         const positions = [
             { x: margin, y: margin }, 
+            { x: margin + puzzleSize + gap, y: margin },
             { x: margin, y: margin + totalPuzzleHeight }, 
-            { x: margin, y: margin + (totalPuzzleHeight * 2) },
-            { x: margin + puzzleSize + gap, y: margin }, 
-            { x: margin + puzzleSize + gap, y: margin + totalPuzzleHeight },
-            { x: margin + puzzleSize + gap, y: margin + (totalPuzzleHeight * 2) }
+            { x: margin + puzzleSize + gap, y: margin + totalPuzzleHeight }
         ];
 
         for (let i = 0; i < puzzleList.length; i++) {
@@ -335,11 +394,12 @@ $(document).ready(function() {
             Chessboard(tempBoardElement, { 
                 position: puzzle.fen, 
                 orientation: puzzle.orientation, 
-                pieceTheme: pieceThemeUrl 
+                pieceTheme: pieceTheme
             });
 
             const canvas = await html2canvas(tempBoardElement, { 
                 scale: 2,
+                useCORS: true,
                 backgroundColor: useWhiteBg ? '#FFFFFF' : null
             });
 
