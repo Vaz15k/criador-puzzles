@@ -179,7 +179,12 @@ $(document).ready(function() {
                     orientation: puzzle.orientation,
                     pieceTheme: pieceThemeUrl 
                 });
-                const canvas = await html2canvas(tempBoardElement, { backgroundColor: useWhiteBg ? '#FFFFFF' : '#333333' });
+                
+                const canvas = await html2canvas(tempBoardElement, { 
+                    backgroundColor: useWhiteBg ? '#FFFFFF' : '#333333',
+                    scale: 2
+                });
+
                 const imgData = canvas.toDataURL('image/png');
                 pdf.addImage(imgData, 'PNG', pos.x, pos.y, puzzleSize, puzzleSize);
                 pdf.setFontSize(12);
